@@ -15,14 +15,9 @@ $(document).ready(function(){
 
 */
 
-/*
-TBD: Save whole nav items collection as a class variable instead of maxScreenIndex and every-time selection (this.anchorSelector+'['+this.attrName+'="'+screenIdx+'"]');
-*/
-
-
-function LPNavigator(anchorSelector, attrName) {
+function LPNavigator(anchorSelector) {
     this.anchorSelector = anchorSelector || '.screen';
-    this.attrName = attrName || 'lpnAnchor';
+	this.anchorsCollection = [];
 	this.screenIndex = 0;
 	this.maxScreenIndex = 0;
 	
@@ -34,14 +29,13 @@ function LPNavigator(anchorSelector, attrName) {
 LPNavigator.prototype = {
 
 	scrollTo: function(screenIdx) {
-		var el = document.querySelector(this.anchorSelector+'['+this.attrName+'="'+screenIdx+'"]');
+		var el = this.anchorsCollection[screenIdx];
 		if (el) {
 			el.scrollIntoView({behavior: 'smooth', block: "start", inline: "start"});
 			this.screenIndex = screenIdx;
 			if (this.onShowScreen) this.onShowScreen(screenIdx);
 			return true;
 		}
-		//console.log('screenIndex='+screenIdx);
 		return false;
 	},
 
@@ -61,19 +55,13 @@ LPNavigator.prototype = {
 		return false;
 	},
 	
-	setInternalAttributes: function(selector) { // функция 
-		selector = selector || '.lpnAnchor';
-		var collection = $(selector);
-		var self = this;
-		collection.each(function(i, el){
-			$(el).attr(self.attrName, i);
-		});
-		return collection.length;
-	},
-	
 	init: function() {
 		var self = this;
-		this.maxScreenIndex = this.setInternalAttributes('.screen');
+		
+		this.anchorsCollection = $(this.anchorSelector);
+		this.maxScreenIndex = this.anchorsCollection.length;
+		
+		this.screenIndex = this.getActiveScreenIndex();
 		
 		document.onkeydown = function (event) {
 			switch (event.key) {
@@ -98,8 +86,24 @@ LPNavigator.prototype = {
 		}, {passive: false} );
 	},
 	
+	getActiveScreenIndex: function() {
+		var result = 0;
+		var pageTop = $(document).scrollTop();
+		
+		for (var i = this.anchorsCollection.length-1; i >= 0 ; i--) {
+			var elTop = $(this.anchorsCollection[i]).offset().top;
+			if (elTop <= pageTop) {
+				result = i;
+				break;
+			}
+		}
+		
+		return result;
+	},
+	
 	onShowScreen: function(screenIndex) {
 		
 	}
 
 };
+
